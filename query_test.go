@@ -31,9 +31,9 @@ func BenchmarkAnd1000(b *testing.B) {
 
 	for n := 0; n < b.N; n++ {
 		sum := uint32(0)
-		q := NewBoolAndQuery(
-			NewTerm("x", x),
-			NewTerm("y", y),
+		q := And(
+			Term("x", x),
+			Term("y", y),
 		)
 		i := q.Iterator()
 		for i.HasNext() {
@@ -48,9 +48,9 @@ func BenchmarkOr1000(b *testing.B) {
 
 	for n := 0; n < b.N; n++ {
 		sum := uint32(0)
-		q := NewBoolOrQuery(
-			NewTerm("x", x),
-			NewTerm("y", y),
+		q := Or(
+			Term("x", x),
+			Term("y", y),
 		)
 		i := q.Iterator()
 		for i.HasNext() {
@@ -66,113 +66,113 @@ func TestModify(t *testing.T) {
 	d := postingsList(100000)
 	e := postingsList(1000000)
 
-	eq(t, a, query(NewTerm("x", a)))
-	eq(t, b, query(NewTerm("x", b)))
-	eq(t, c, query(NewTerm("x", c)))
-	eq(t, d, query(NewTerm("x", d)))
-	eq(t, e, query(NewTerm("x", e)))
+	eq(t, a, query(Term("x", a)))
+	eq(t, b, query(Term("x", b)))
+	eq(t, c, query(Term("x", c)))
+	eq(t, d, query(Term("x", d)))
+	eq(t, e, query(Term("x", e)))
 
-	eq(t, b, query(NewBoolOrQuery(
-		NewTerm("a", a),
-		NewTerm("b", b),
+	eq(t, b, query(Or(
+		Term("a", a),
+		Term("b", b),
 	)))
 
-	eq(t, c, query(NewBoolOrQuery(
-		NewTerm("a", a),
-		NewTerm("b", b),
-		NewTerm("c", c),
+	eq(t, c, query(Or(
+		Term("a", a),
+		Term("b", b),
+		Term("c", c),
 	)))
 
-	eq(t, e, query(NewBoolOrQuery(
-		NewTerm("a", a),
-		NewTerm("b", b),
-		NewTerm("c", c),
-		NewTerm("d", d),
-		NewTerm("e", e),
+	eq(t, e, query(Or(
+		Term("a", a),
+		Term("b", b),
+		Term("c", c),
+		Term("d", d),
+		Term("e", e),
 	)))
 
-	eq(t, a, query(NewBoolAndQuery(
-		NewTerm("a", a),
-		NewTerm("b", b),
-		NewTerm("c", c),
-		NewTerm("d", d),
-		NewTerm("e", e),
+	eq(t, a, query(And(
+		Term("a", a),
+		Term("b", b),
+		Term("c", c),
+		Term("d", d),
+		Term("e", e),
 	)))
 
-	eq(t, roaring.BitmapOf(4, 6, 7, 8, 10), query(NewBoolAndNotQuery(
-		NewTerm("x", roaring.BitmapOf(1, 2, 3, 9)),
-		NewBoolOrQuery(
-			NewTerm("x", roaring.BitmapOf(3, 4)),
-			NewTerm("x", roaring.BitmapOf(1, 2, 3, 6, 7, 8, 9, 10)),
+	eq(t, roaring.BitmapOf(4, 6, 7, 8, 10), query(AndNot(
+		Term("x", roaring.BitmapOf(1, 2, 3, 9)),
+		Or(
+			Term("x", roaring.BitmapOf(3, 4)),
+			Term("x", roaring.BitmapOf(1, 2, 3, 6, 7, 8, 9, 10)),
 		),
 	)))
-	eq(t, roaring.BitmapOf(6, 7, 8, 10), query(NewBoolAndNotQuery(
-		NewTerm("x", roaring.BitmapOf(1, 2, 3, 9)),
-		NewBoolAndNotQuery(
-			NewTerm("x", roaring.BitmapOf(4, 5)),
-			NewTerm("x", roaring.BitmapOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
-			NewTerm("x", roaring.BitmapOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
-		),
-	)))
-
-	eq(t, roaring.BitmapOf(6, 7, 8, 10), query(NewBoolAndNotQuery(
-		NewBoolOrQuery(
-			NewTerm("x", roaring.BitmapOf(1, 2)),
-			NewTerm("x", roaring.BitmapOf(3, 9))),
-		NewBoolAndNotQuery(
-			NewTerm("x", roaring.BitmapOf(4, 5)),
-			NewTerm("x", roaring.BitmapOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
-			NewTerm("x", roaring.BitmapOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
+	eq(t, roaring.BitmapOf(6, 7, 8, 10), query(AndNot(
+		Term("x", roaring.BitmapOf(1, 2, 3, 9)),
+		AndNot(
+			Term("x", roaring.BitmapOf(4, 5)),
+			Term("x", roaring.BitmapOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
+			Term("x", roaring.BitmapOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
 		),
 	)))
 
-	eq(t, roaring.BitmapOf(), query(NewBoolAndNotQuery(
-		NewTerm("x", roaring.BitmapOf(1, 2, 3, 9)),
-		NewTerm("x", roaring.BitmapOf(1, 2, 3, 9)),
-	)))
-
-	eq(t, roaring.BitmapOf(), query(NewBoolAndNotQuery(
-		NewTerm("x", roaring.BitmapOf(1, 2, 3, 9)),
-	)))
-
-	eq(t, roaring.BitmapOf(1, 2, 3, 9), query(NewBoolAndNotQuery(
-		NewTerm("x", roaring.BitmapOf()),
-		NewTerm("x", roaring.BitmapOf(1, 2, 3, 9)),
-	)))
-
-	eq(t, b, query(NewBoolAndQuery(
-		NewBoolOrQuery(
-			NewTerm("x", a),
-			NewTerm("x", b),
+	eq(t, roaring.BitmapOf(6, 7, 8, 10), query(AndNot(
+		Or(
+			Term("x", roaring.BitmapOf(1, 2)),
+			Term("x", roaring.BitmapOf(3, 9))),
+		AndNot(
+			Term("x", roaring.BitmapOf(4, 5)),
+			Term("x", roaring.BitmapOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
+			Term("x", roaring.BitmapOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
 		),
-		NewTerm("x", b),
-		NewTerm("x", c),
-		NewTerm("x", d),
-		NewTerm("x", e),
 	)))
 
-	eq(t, c, query(NewBoolAndQuery(
-		NewBoolOrQuery(
-			NewTerm("x", a),
-			NewTerm("x", b),
-			NewBoolAndQuery(
-				NewTerm("x", c),
-				NewTerm("x", d),
+	eq(t, roaring.BitmapOf(), query(AndNot(
+		Term("x", roaring.BitmapOf(1, 2, 3, 9)),
+		Term("x", roaring.BitmapOf(1, 2, 3, 9)),
+	)))
+
+	eq(t, roaring.BitmapOf(), query(AndNot(
+		Term("x", roaring.BitmapOf(1, 2, 3, 9)),
+	)))
+
+	eq(t, roaring.BitmapOf(1, 2, 3, 9), query(AndNot(
+		Term("x", roaring.BitmapOf()),
+		Term("x", roaring.BitmapOf(1, 2, 3, 9)),
+	)))
+
+	eq(t, b, query(And(
+		Or(
+			Term("x", a),
+			Term("x", b),
+		),
+		Term("x", b),
+		Term("x", c),
+		Term("x", d),
+		Term("x", e),
+	)))
+
+	eq(t, c, query(And(
+		Or(
+			Term("x", a),
+			Term("x", b),
+			And(
+				Term("x", c),
+				Term("x", d),
 			),
 		),
-		NewTerm("x", d),
-		NewTerm("x", e),
+		Term("x", d),
+		Term("x", e),
 	)))
 
-	q := NewBoolAndNotQuery(
-		NewBoolOrQuery(
-			NewTerm("a", roaring.BitmapOf(1, 2)),
-			NewTerm("b", roaring.BitmapOf(3, 9))),
-		NewBoolAndQuery(
-			NewTerm("c", roaring.BitmapOf(4, 5)),
-			NewTerm("d", roaring.BitmapOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
+	q := AndNot(
+		Or(
+			Term("a", roaring.BitmapOf(1, 2)),
+			Term("b", roaring.BitmapOf(3, 9))),
+		And(
+			Term("c", roaring.BitmapOf(4, 5)),
+			Term("d", roaring.BitmapOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
 		),
-		NewTerm("e", roaring.BitmapOf(4, 5, 6)),
+		Term("e", roaring.BitmapOf(4, 5, 6)),
 	)
 
 	eq(t, roaring.BitmapOf(4, 5), q.Execute())

@@ -1,20 +1,37 @@
-example:
+Simple query dsl on top of roaring bitmaps
 
-	q := NewBoolAndNotQuery(
-		NewBoolOrQuery(
-			NewTerm("a", roaring.BitmapOf(1, 2)),
-			NewTerm("b", roaring.BitmapOf(3, 9))),
-		NewBoolAndQuery(
-			NewTerm("c", roaring.BitmapOf(4, 5)),
-			NewTerm("d", roaring.BitmapOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
-		),
-                NewTerm("e", roaring.BitmapOf(4, 5, 6)),
-	)
-        // ({c AND d} AND e) AND NOT {a OR b}
+Example:
 
-        iter := q.Iterator()
-        for iter.HasNext() {
-            match := iter.Next()
-            log.Printf("document id: %d",match)
-        }
+    package main
 
+    import (
+    	"log"
+
+    	"github.com/RoaringBitmap/roaring"
+    )
+
+    func main() {
+    	q := rq.AndNot(
+    		rq.Or(
+    			rq.Term("a", roaring.BitmapOf(1, 2)),
+    			rq.Term("b", roaring.BitmapOf(3, 9))),
+    		rq.And(
+    			rq.Term("c", roaring.BitmapOf(4, 5)),
+    			rq.Term("d", roaring.BitmapOf(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
+    		),
+    		rq.Term("e", roaring.BitmapOf(4, 5, 6)),
+    	)
+    	// ({c AND d} AND e) AND NOT {a OR b}
+
+    	iter := q.Iterator()
+    	for iter.HasNext() {
+    		match := iter.Next()
+    		log.Printf("document id: %d", match)
+    	}
+    }
+
+func And(queries ...Query) *boolAndQuery
+func AndNot(not Query, queries ...Query) *boolAndQuery
+func Or(queries ...Query) *boolOrQuery
+func Term(t string, r *roaring.Bitmap) *termQuery
+type Query interface{ ... }

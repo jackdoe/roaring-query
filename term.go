@@ -4,26 +4,26 @@ import (
 	"github.com/RoaringBitmap/roaring"
 )
 
-type Term struct {
+type termQuery struct {
 	r    *roaring.Bitmap
 	term string
 }
 
-func NewTerm(t string, r *roaring.Bitmap) *Term {
-	return &Term{
+func Term(t string, r *roaring.Bitmap) *termQuery {
+	return &termQuery{
 		term: t,
 		r:    r,
 	}
 }
 
-func (t *Term) String() string {
+func (t *termQuery) String() string {
 	return t.term
 }
 
-func (t *Term) Execute() *roaring.Bitmap {
+func (t *termQuery) Execute() *roaring.Bitmap {
 	return t.r
 }
 
-func (t *Term) Iterator() roaring.IntIterable {
+func (t *termQuery) Iterator() roaring.IntIterable {
 	return t.r.Iterator()
 }

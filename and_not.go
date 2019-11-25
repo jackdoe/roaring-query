@@ -7,31 +7,31 @@ import (
 	"github.com/RoaringBitmap/roaring"
 )
 
-type BoolAndQuery struct {
+type boolAndQuery struct {
 	queries []Query
 	not     Query
 }
 
-func (q *BoolAndQuery) AddSubQuery(sub Query) {
+func (q *boolAndQuery) AddSubQuery(sub Query) {
 	q.queries = append(q.queries, sub)
 }
 
-func NewBoolAndNotQuery(not Query, queries ...Query) *BoolAndQuery {
-	return NewBoolAndQuery(queries...).SetNot(not)
+func AndNot(not Query, queries ...Query) *boolAndQuery {
+	return And(queries...).SetNot(not)
 }
 
-func NewBoolAndQuery(queries ...Query) *BoolAndQuery {
-	return &BoolAndQuery{
+func And(queries ...Query) *boolAndQuery {
+	return &boolAndQuery{
 		queries: queries,
 	}
 }
 
-func (q *BoolAndQuery) SetNot(not Query) *BoolAndQuery {
+func (q *boolAndQuery) SetNot(not Query) *boolAndQuery {
 	q.not = not
 	return q
 }
 
-func (q *BoolAndQuery) String() string {
+func (q *boolAndQuery) String() string {
 	out := []string{}
 	for _, v := range q.queries {
 		out = append(out, v.String())
@@ -43,7 +43,7 @@ func (q *BoolAndQuery) String() string {
 	return "{" + s + "}"
 }
 
-func (q *BoolAndQuery) Execute() *roaring.Bitmap {
+func (q *boolAndQuery) Execute() *roaring.Bitmap {
 	m := []*roaring.Bitmap{}
 	for _, s := range q.queries {
 		m = append(m, s.Execute())
@@ -57,6 +57,6 @@ func (q *BoolAndQuery) Execute() *roaring.Bitmap {
 	return out
 }
 
-func (q *BoolAndQuery) Iterator() roaring.IntIterable {
+func (q *boolAndQuery) Iterator() roaring.IntIterable {
 	return q.Execute().Iterator()
 }
