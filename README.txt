@@ -6,7 +6,7 @@ Example:
 
     import (
     	"log"
-
+  	rq "github.com/jackdoe/roaring-query"
     	"github.com/RoaringBitmap/roaring"
     )
 
